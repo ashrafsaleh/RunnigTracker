@@ -1,6 +1,7 @@
-package com.example.db
+package com.example.runningtracker.db
 
 import androidx.room.Database
+import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database (
@@ -8,6 +9,6 @@ import androidx.room.TypeConverters
     version = 1
         )
 @TypeConverters (Converters::class)
-abstract class RunningDataBase {
-    abstract fun getRunDao():RunDAO
+abstract class RunningDataBase : RoomDatabase(){
+    abstract fun getRunDao(): RunDAO
 }
