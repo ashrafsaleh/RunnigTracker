@@ -46,6 +46,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class TrackingService : LifecycleService() {
     var firstRun = true
+    var isServiceKilled = false
 
     @Inject
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -82,6 +83,15 @@ class TrackingService : LifecycleService() {
         })
     }
 
+    private fun killService(){
+        isServiceKilled = true
+        firstRun = true
+        pauseService()
+        postValues()
+        stopForeground(true)
+        stopSelf()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
             when (it.action) {
@@ -100,6 +110,7 @@ class TrackingService : LifecycleService() {
                 }
                 ACTION_STOP_SERVICE -> {
                     Timber.d("Stopped service")
+                    killService()
                 }
             }
         }
@@ -159,9 +170,11 @@ class TrackingService : LifecycleService() {
             isAccessible = true
             set(currentNotificationBuilder, ArrayList<NotificationCompat.Action>())
         }
+        if (!isServiceKilled){
         currentNotificationBuilder = notificationBuilder
             .addAction(R.drawable.ic_pause_black_24dp, notificationActionText, pendingIntent)
         notificationManager.notify(NOTIFICATION_ID, currentNotificationBuilder.build())
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -224,9 +237,11 @@ class TrackingService : LifecycleService() {
 
         startForeground(NOTIFICATION_ID, notificationBuilder.build())
         timeRunInSeconds.observe(this, Observer {
+            if (!isServiceKilled){
             val notification = currentNotificationBuilder
                 .setContentText(TrackingUtility.getFormattedStopWatchTime(it * 1000L))
             notificationManager.notify(NOTIFICATION_ID,notification.build())
+            }
         })
     }
 
